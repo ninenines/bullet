@@ -96,6 +96,8 @@ info(Message, Req,
 			{ok, Req3, State#state{handler_state=HandlerState2}}
 	end.
 
+terminate(_Req, undefined) ->
+	ok;
 terminate(Req, #state{handler=Handler, handler_state=HandlerState}) ->
 	Handler:terminate(Req, HandlerState).
 
