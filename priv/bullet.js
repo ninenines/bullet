@@ -209,6 +209,7 @@
 					// Close happened on connect, select next transport
 					if (readyState == CONNECTING){
 						tn++;
+					}
 
 					delay *= 2;
 					if (delay > 10000){
