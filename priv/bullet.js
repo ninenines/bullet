@@ -30,7 +30,7 @@
 	onmessage is called once for each message receveid.
 	onclose is called once right after you voluntarily close the socket.
 	onheartbeat is called once every few seconds to allow you to easily setup
-	a ping/pong mechanism. By default a JSON ping is sent.
+	a ping/pong mechanism.
 */
 (function($){$.extend({bullet: function(url){
 	var CONNECTING = 0;
@@ -45,26 +45,36 @@
 			@see https://bugzilla.mozilla.org/show_bug.cgi?id=662554
 		*/
 		websocket: function(){
+			var ret = false;
+
 			if (window.WebSocket){
-				return window.WebSocket;
+				ret = window.WebSocket;
 			}
 
 			if (window.MozWebSocket
 					&& navigator.userAgent.indexOf("Firefox/6.0") == -1){
-				return window.MozWebSocket;
+				ret = window.MozWebSocket;
+			}
+
+			if (ret){
+				return {'heart': true, 'transport': ret};
 			}
 
 			return false;
 		},
 
 		xhrPolling: function(){
-			var openTimeout;
-			var pollTimeout;
+			var timeout;
+			var xhr;
 
 			var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
 			var fake = {
 				readyState: CONNECTING,
 				send: function(data){
+					if (this.readyState != OPEN){
+						return false;
+					}
+
 					$.ajax({
 						async: false,
 						type: 'POST',
@@ -73,20 +83,24 @@
 						dataType: 'text',
 						contentType:
 							'application/x-www-form-urlencoded; charset=utf-8',
+						headers: {'X-Socket-Transport': 'xhrPolling'},
 						success: function(data){
-							fake.onmessage({'data': data});
+							if (data.length != 0){
+								fake.onmessage({'data': data});
+							}
 						},
 						error: function(xhr){
-							// @todo That's bad, assume success?
-							$(fake).triggerHandler('error');
+							fake.onerror();
 						}
 					});
+
+					return true;
 				},
 				close: function(){
 					this.readyState = CLOSED;
-					$(fake).triggerHandler('close');
-					clearTimeout(openTimeout);
-					clearTimeout(pollTimeout);
+					xhr.abort();
+					clearTimeout(timeout);
+					fake.onclose();
 				},
 				onopen: function(){},
 				onmessage: function(){},
@@ -95,31 +109,43 @@
 			};
 
 			function poll(){
-				$.ajax({
+				// We should probably test a connection before doing this
+				if (fake.readyState == CONNECTING){
+					fake.readyState = OPEN;
+					fake.onopen(fake);
+				}
+
+
+				xhr = $.ajax({
 					type: 'GET',
 					url: fakeurl,
 					dataType: 'text',
 					data: {},
-					headers: {'X-Socket-Transport': 'AJAX long polling'},
+					headers: {'X-Socket-Transport': 'xhrPolling'},
 					success: function(data){
-						fake.onmessage({'data': data});
+						// Connection might have closed without a response body
+						if (data.length != 0){
+							fake.onmessage({'data': data});
+						}
 						if (fake.readyState == OPEN){
-							pollTimeout = setTimeout(function(){poll();}, 100);
+							nextPoll();
 						}
 					},
 					error: function(xhr){
-						$(fake).triggerHandler('error');
+						if (fake.readyState == OPEN){
+							nextPoll();
+						}
 					}
 				});
 			}
 
-			openTimeout = setTimeout(function(){
-				fake.readyState = OPEN;
-				$(fake).triggerHandler('open');
-				pollTimeout = setTimeout(function(){poll();}, 100);
-			}, 100);
+			function nextPoll(){
+				timeout = setTimeout(function(){poll();}, 100);
+			}
 
-			return function(){ return fake; };
+			nextPoll();
+
+			return {'heart': false, 'transport': function(){ return fake; }};
 		}
 	};
 
@@ -131,7 +157,9 @@
 			if (tn >= c){
 				var t = transports[f]();
 				if (t){
-					return new t(url);
+					var ret = new t.transport(url);
+					ret.heart = t.heart;
+					return ret;
 				}
 
 				tn++;
@@ -142,44 +170,48 @@
 	}
 
 	var stream = new function(){
-		var readyState = CONNECTING;
-		var connected = false;
+		var readyState = CLOSED;
 		var heartbeat;
-		var reopenTime = 500;
+		var delay = delayDefault = 80;
 
 		var transport = next();
 		function init(){
+			readyState = CONNECTING;
+
 			transport.onopen = function(){
-				connected = true;
-				// @todo We don't want to heartbeat all transports.
-				heartbeat = setInterval(function(){stream.onheartbeat();}, 20000);
-				reopenTime = 500;
+				// We got a connection, reset the poll delay
+				delay = delayDefault;
+
+				if (transport.heart){
+					heartbeat = setInterval(function(){stream.onheartbeat();}, 20000);
+				}
 
 				if (readyState != OPEN){
 					readyState = OPEN;
-					$(stream).triggerHandler('open');
+					stream.onopen();
 				}
 			};
 			transport.onclose = function(){
-				connected = false;
 				clearInterval(heartbeat);
-				reopenTime *= 2;
 
 				if (readyState == CLOSING){
 					readyState = CLOSED;
-					$(stream).triggerHandler('close');
+					stream.onclose();
 				} else{
 					// Close happened on connect, select next transport
 					if (readyState == CONNECTING){
 						tn++;
+					} else{
+						delay *= 2;
+						if (delay > 10000){
+							delay = 10000;
+						}
 					}
 
-					// Wait some time between each reconnects.
-					// @todo Improve that.
 					setTimeout(function(){
 						transport = next();
 						init();
-					}, reopenTime);
+					}, delay);
 				}
 			};
 			transport.onerror = transport.onclose;
@@ -195,16 +227,11 @@
 		this.onheartbeat = function(){};
 
 		this.send = function(data){
-			if (connected){
-				transport.send(data);
-			} else{
-				// @todo That's bad, assume success?
-				$(stream).triggerHandler('error');
-			}
+			return transport.send(data);
 		};
 		this.close = function(){
 			readyState = CLOSING;
-			transport.close(data);
+			transport.close();
 		};
 	};
 
