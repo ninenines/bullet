@@ -154,7 +154,7 @@
 		var c = 0;
 
 		for (var f in transports){
-			if (tn >= c){
+			if (tn == c){
 				var t = transports[f]();
 				if (t){
 					var ret = new t.transport(url);
@@ -167,6 +167,8 @@
 
 			c++;
 		}
+
+		return false;
 	}
 
 	var stream = new function(){
@@ -177,6 +179,12 @@
 		var transport = next();
 		function init(){
 			readyState = CONNECTING;
+
+			if (!transport){
+				// No transport, give up
+				// @todo Trigger a disconnect error
+				return false;
+			}
 
 			transport.onopen = function(){
 				// We got a connection, reset the poll delay
@@ -201,11 +209,10 @@
 					// Close happened on connect, select next transport
 					if (readyState == CONNECTING){
 						tn++;
-					} else{
-						delay *= 2;
-						if (delay > 10000){
-							delay = 10000;
-						}
+
+					delay *= 2;
+					if (delay > 10000){
+						delay = 10000;
 					}
 
 					setTimeout(function(){
