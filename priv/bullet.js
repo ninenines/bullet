@@ -115,7 +115,6 @@
 					fake.onopen(fake);
 				}
 
-
 				xhr = $.ajax({
 					type: 'GET',
 					url: fakeurl,
@@ -132,9 +131,7 @@
 						}
 					},
 					error: function(xhr){
-						if (fake.readyState == OPEN){
-							nextPoll();
-						}
+						fake.onerror();
 					}
 				});
 			}
