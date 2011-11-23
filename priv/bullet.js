@@ -77,6 +77,7 @@
 
 					$.ajax({
 						async: false,
+						cache: false,
 						type: 'POST',
 						url: fakeurl,
 						data: data,
@@ -117,6 +118,7 @@
 
 				xhr = $.ajax({
 					type: 'GET',
+					cache: false,
 					url: fakeurl,
 					dataType: 'text',
 					data: {},
