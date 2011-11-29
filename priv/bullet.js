@@ -89,9 +89,6 @@
 							if (data.length != 0){
 								fake.onmessage({'data': data});
 							}
-						},
-						error: function(xhr){
-							fake.onerror();
 						}
 					});
 
