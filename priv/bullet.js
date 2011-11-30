@@ -71,7 +71,7 @@
 			var fake = {
 				readyState: CONNECTING,
 				send: function(data){
-					if (this.readyState != OPEN){
+					if (this.readyState != CONNECTING && this.readyState != OPEN){
 						return false;
 					}
 
@@ -107,12 +107,6 @@
 			};
 
 			function poll(){
-				// We should probably test a connection before doing this
-				if (fake.readyState == CONNECTING){
-					fake.readyState = OPEN;
-					fake.onopen(fake);
-				}
-
 				xhr = $.ajax({
 					type: 'GET',
 					cache: false,
@@ -121,6 +115,10 @@
 					data: {},
 					headers: {'X-Socket-Transport': 'xhrPolling'},
 					success: function(data){
+						if (fake.readyState == CONNECTING){
+							fake.readyState = OPEN;
+							fake.onopen(fake);
+						}
 						// Connection might have closed without a response body
 						if (data.length != 0){
 							fake.onmessage({'data': data});
