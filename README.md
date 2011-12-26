@@ -48,12 +48,12 @@ is automatically done when needed by the Bullet client as explained
 later in this document.
 
 You might have noticed the odd Active argument to init/4. It
-indicates what type of connection we have. When Active == false,
+indicates what type of connection we have. When Active == once,
 we have a temporary connection that only allows one reply before
 terminating. When Active == true, the connection allows any number
 of replies. You can use this information to inform your session
 process that it should send only 1 message, in the case of
-Active == false, or that it can send messages whenever in the
+Active == once, or that it can send messages whenever in the
 case of Active == true.
 
 You would typically use init/4 to inform your session process
