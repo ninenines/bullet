@@ -15,6 +15,24 @@ provides an optional heartbeat which is managed on the client side.
 
 Today Bullet only supports websocket and long-polling transports.
 
+Dispatch options
+----------------
+
+Similar to any other handler, you need to setup the dispatch list before
+you can access your Bullet handlers. Bullet itself is a Cowboy HTTP
+handler that translates some of the lower-level functions into a
+simplified higher-level interface.
+
+The dispatch options for a Bullet handler looks as follow:
+
+``` erlang
+{[<<"path">>, <<"to">>, <<"bullet">>], bullet_handler,
+	[{handler, my_stream}]}
+```
+
+Simply define this in your dispatch list and your handler will be
+available and handled by Bullet properly.
+
 Cowboy handler
 --------------
 
