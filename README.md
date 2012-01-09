@@ -75,7 +75,7 @@ a document.ready function like this:
 
 ``` js
 $(document).ready(function(){
-	var bullet = $.bullet(stream);
+	var bullet = $.bullet('ws://localhost/path/to/bullet/handler');
 	bullet.onopen = function(){
 		console.log('WebSocket: opened');
 	};
