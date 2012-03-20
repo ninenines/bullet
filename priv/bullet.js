@@ -228,6 +228,9 @@
 		this.onclose = function(){};
 		this.onheartbeat = function(){};
 
+		this.setURL = function(newURL){
+			url = newURL;
+		};
 		this.send = function(data){
 			return transport.send(data);
 		};
