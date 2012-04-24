@@ -67,13 +67,14 @@
 			var timeout;
 			var xhr;
 
-			var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
 			var fake = {
 				readyState: CONNECTING,
 				send: function(data){
 					if (this.readyState != CONNECTING && this.readyState != OPEN){
 						return false;
 					}
+
+					var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
 
 					$.ajax({
 						async: false,
@@ -107,6 +108,8 @@
 			};
 
 			function poll(){
+				var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
+
 				xhr = $.ajax({
 					type: 'GET',
 					cache: false,
