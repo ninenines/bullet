@@ -29,8 +29,7 @@ build-plt:
 		--apps kernel stdlib deps/cowboy
 
 dialyze:
-	@$(DIALYZER) --src src --plt .bullet_dialyzer.plt \
-		-Wbehaviours -Werror_handling \
+	@$(DIALYZER) --src src --plt .bullet_dialyzer.plt -Werror_handling \
 		-Wrace_conditions -Wunmatched_returns # -Wunderspecs
 
 docs:
