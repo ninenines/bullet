@@ -172,14 +172,19 @@
 		var readyState = CLOSED;
 		var heartbeat;
 		var delay = delayDefault = 80;
+		var delayMax = 10000;
 
-		var transport = next();
+		var transport;
 		function init(){
 			readyState = CONNECTING;
+			transport = next();
 
 			if (!transport){
-				// No transport, give up
-				// @todo Trigger a disconnect error
+				// Hard disconnect, inform the user and retry later
+				delay = delayDefault;
+				tn = 0;
+				stream.ondisconnect();
+				setTimeout(function(){init();}, delayMax);
 				return false;
 			}
 
@@ -209,12 +214,11 @@
 					}
 
 					delay *= 2;
-					if (delay > 10000){
-						delay = 10000;
+					if (delay > delayMax){
+						delay = delayMax;
 					}
 
 					setTimeout(function(){
-						transport = next();
 						init();
 					}, delay);
 				}
@@ -228,6 +232,7 @@
 
 		this.onopen = function(){};
 		this.onmessage = function(){};
+		this.ondisconnect = function(){};
 		this.onclose = function(){};
 		this.onheartbeat = function(){};
 
