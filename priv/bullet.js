@@ -169,6 +169,7 @@
 	}
 
 	var stream = new function(){
+		var isClosed = true;
 		var readyState = CLOSED;
 		var heartbeat;
 		var delay = delayDefault = 80;
@@ -176,6 +177,7 @@
 
 		var transport;
 		function init(){
+			isClosed = false;
 			readyState = CONNECTING;
 			transport = next();
 
@@ -202,6 +204,12 @@
 				}
 			};
 			transport.onclose = function(){
+				// Firefox 13.0.1 sends 2 close events.
+				// Return directly if we already handled it.
+				if (isClosed){
+					return;
+				}
+
 				clearInterval(heartbeat);
 
 				if (readyState == CLOSING){
@@ -217,6 +225,8 @@
 					if (delay > delayMax){
 						delay = delayMax;
 					}
+
+					isClosed = true;
 
 					setTimeout(function(){
 						init();
