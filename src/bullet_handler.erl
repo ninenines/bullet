@@ -73,17 +73,20 @@ handle(Req, State) ->
 	{Method, Req2} = cowboy_http_req:method(Req),
 	handle(Req2, State, Method).
 
-handle(_Req, _State, 'GET') ->
-	exit(badarg);
 handle(Req, State=#state{handler=Handler, handler_state=HandlerState},
 		'POST') ->
-	{ok, Data, Req2} = cowboy_http_req:body(Req),
-	case Handler:stream(Data, Req2, HandlerState) of
-		{ok, Req3, HandlerState2} ->
-			{ok, Req3, State#state{handler_state=HandlerState2}};
-		{reply, Reply, Req3, HandlerState2} ->
-			{ok, Req4} = cowboy_http_req:reply(200, [], Reply, Req3),
-			{ok, Req4, State#state{handler_state=HandlerState2}}
+	case cowboy_http_req:body(Req) of
+		{ok, Data, Req2} ->
+			case Handler:stream(Data, Req2, HandlerState) of
+				{ok, Req3, HandlerState2} ->
+					{ok, Req3, State#state{handler_state=HandlerState2}};
+				{reply, Reply, Req3, HandlerState2} ->
+					{ok, Req4} = cowboy_http_req:reply(200, [], Reply, Req3),
+					{ok, Req4, State#state{handler_state=HandlerState2}}
+			end;
+		{error, _} ->
+			%% An error occurred, stop there.
+			{ok, Req, State}
 	end.
 
 info(Message, Req,
