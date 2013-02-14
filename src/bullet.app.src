@@ -18,7 +18,7 @@
 		"Simple, reliable, efficient streaming for Cowboy."},
 	{sub_description, "Bullet is a permanent bidirectional connection "
 		"between the browser and the server."},
-	{vsn, "0.2.3"},
+	{vsn, "0.4.0"},
 	{modules, []},
 	{registered, []},
 	{applications, [
