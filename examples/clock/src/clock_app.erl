@@ -11,21 +11,20 @@
 %% API.
 
 start(_Type, _Args) ->
-	Dispatch = [
+	Dispatch = cowboy_router:compile([
 		{'_', [
-			{[], toppage_handler, []},
-			{[<<"bullet">>], bullet_handler, [{handler, stream_handler}]},
-			{[<<"static">>, '...'], cowboy_http_static, [
+			{"/", toppage_handler, []},
+			{"/bullet", bullet_handler, [{handler, stream_handler}]},
+			{"/static/[...]", cowboy_static, [
 				{directory, {priv_dir, bullet, []}},
 				{mimetypes, [
 					{<<".js">>, [<<"application/javascript">>]}
 				]}
 			]}
 		]}
-	],
-	{ok, _} = cowboy:start_listener(http, 100,
-		cowboy_tcp_transport, [{port, 8080}],
-		cowboy_http_protocol, [{dispatch, Dispatch}]
+	]),
+	{ok, _} = cowboy:start_http(http, 100,
+		[{port, 8080}], [{env, [{dispatch, Dispatch}]}]
 	),
 	clock_sup:start_link().
 

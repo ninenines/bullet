@@ -13,13 +13,17 @@
 %% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 -module(bullet_handler).
-
 -behaviour(cowboy_http_handler).
--export([init/3, handle/2, info/3, terminate/2]).
+-behaviour(cowboy_websocket_handler).
 
--behaviour(cowboy_http_websocket_handler).
--export([websocket_init/3, websocket_handle/3,
-	websocket_info/3, websocket_terminate/3]).
+-export([init/3]).
+-export([handle/2]).
+-export([info/3]).
+-export([terminate/3]).
+-export([websocket_init/3]).
+-export([websocket_handle/3]).
+-export([websocket_info/3]).
+-export([websocket_terminate/3]).
 
 -record(state, {
 	handler :: module(),
@@ -31,32 +35,32 @@
 %% HTTP.
 
 init(Transport, Req, Opts) ->
-	case cowboy_http_req:header('Upgrade', Req) of
+	case cowboy_req:header(<<"upgrade">>, Req) of
 		{undefined, Req2} ->
-			{Method, Req3} = cowboy_http_req:method(Req2),
+			{Method, Req3} = cowboy_req:method(Req2),
 			init(Transport, Req3, Opts, Method);
 		{Bin, Req2} when is_binary(Bin) ->
 			case cowboy_bstr:to_lower(Bin) of
 				<<"websocket">> ->
-					{upgrade, protocol, cowboy_http_websocket};
+					{upgrade, protocol, cowboy_websocket};
 				_Any ->
-					{ok, Req3} = cowboy_http_req:reply(501, [], [], Req2),
+					{ok, Req3} = cowboy_req:reply(501, [], [], Req2),
 					{shutdown, Req3, undefined}
 			end
 	end.
 
-init(Transport, Req, Opts, 'GET') ->
+init(Transport, Req, Opts, <<"GET">>) ->
 	{handler, Handler} = lists:keyfind(handler, 1, Opts),
 	State = #state{handler=Handler},
 	case Handler:init(Transport, Req, Opts, once) of
 		{ok, Req2, HandlerState} ->
-			Req3 = cowboy_http_req:compact(Req2),
+			Req3 = cowboy_req:compact(Req2),
 			{loop, Req3, State#state{handler_state=HandlerState},
 				?TIMEOUT, hibernate};
 		{shutdown, Req2, HandlerState} ->
 			{shutdown, Req2, State#state{handler_state=HandlerState}}
 	end;
-init(Transport, Req, Opts, 'POST') ->
+init(Transport, Req, Opts, <<"POST">>) ->
 	{handler, Handler} = lists:keyfind(handler, 1, Opts),
 	State = #state{handler=Handler},
 	case Handler:init(Transport, Req, Opts, false) of
@@ -66,22 +70,22 @@ init(Transport, Req, Opts, 'POST') ->
 			{shutdown, Req2, State#state{handler_state=HandlerState}}
 	end;
 init(_Transport, Req, _Opts, _Method) ->
-	{ok, Req2} = cowboy_http_req:reply(405, [], [], Req),
+	{ok, Req2} = cowboy_req:reply(405, [], [], Req),
 	{shutdown, Req2, undefined}.
 
 handle(Req, State) ->
-	{Method, Req2} = cowboy_http_req:method(Req),
+	{Method, Req2} = cowboy_req:method(Req),
 	handle(Req2, State, Method).
 
 handle(Req, State=#state{handler=Handler, handler_state=HandlerState},
 		'POST') ->
-	case cowboy_http_req:body(Req) of
+	case cowboy_req:body(Req) of
 		{ok, Data, Req2} ->
 			case Handler:stream(Data, Req2, HandlerState) of
 				{ok, Req3, HandlerState2} ->
 					{ok, Req3, State#state{handler_state=HandlerState2}};
 				{reply, Reply, Req3, HandlerState2} ->
-					{ok, Req4} = cowboy_http_req:reply(200, [], Reply, Req3),
+					{ok, Req4} = cowboy_req:reply(200, [], Reply, Req3),
 					{ok, Req4, State#state{handler_state=HandlerState2}}
 			end;
 		{error, _} ->
@@ -95,13 +99,13 @@ info(Message, Req,
 		{ok, Req2, HandlerState2} ->
 			{loop, Req2, State#state{handler_state=HandlerState2}, hibernate};
 		{reply, Data, Req2, HandlerState2} ->
-			{ok, Req3} = cowboy_http_req:reply(200, [], Data, Req2),
+			{ok, Req3} = cowboy_req:reply(200, [], Data, Req2),
 			{ok, Req3, State#state{handler_state=HandlerState2}}
 	end.
 
-terminate(_Req, undefined) ->
+terminate(_Reason, _Req, undefined) ->
 	ok;
-terminate(Req, #state{handler=Handler, handler_state=HandlerState}) ->
+terminate(_Reason, Req, #state{handler=Handler, handler_state=HandlerState}) ->
 	Handler:terminate(Req, HandlerState).
 
 %% Websocket.
@@ -111,7 +115,7 @@ websocket_init(Transport, Req, Opts) ->
 	State = #state{handler=Handler},
 	case Handler:init(Transport, Req, Opts, true) of
 		{ok, Req2, HandlerState} ->
-			Req3 = cowboy_http_req:compact(Req2),
+			Req3 = cowboy_req:compact(Req2),
 			{ok, Req3, State#state{handler_state=HandlerState},
 				?TIMEOUT, hibernate};
 		{shutdown, Req2, _HandlerState} ->
