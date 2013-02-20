@@ -78,7 +78,7 @@ handle(Req, State) ->
 	handle(Req2, State, Method).
 
 handle(Req, State=#state{handler=Handler, handler_state=HandlerState},
-		'POST') ->
+		<<"POST">>) ->
 	case cowboy_req:body(Req) of
 		{ok, Data, Req2} ->
 			case Handler:stream(Data, Req2, HandlerState) of
