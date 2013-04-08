@@ -45,22 +45,22 @@
 			@see https://bugzilla.mozilla.org/show_bug.cgi?id=662554
 		*/
 		websocket: function(){
-			var ret = false;
+			var transport = null;
 
 			if (window.WebSocket){
-				ret = window.WebSocket;
+				transport = window.WebSocket;
 			}
 
 			if (window.MozWebSocket
 					&& navigator.userAgent.indexOf("Firefox/6.0") == -1){
-				ret = window.MozWebSocket;
+				transport = window.MozWebSocket;
 			}
 
-			if (ret){
-				return {'heart': true, 'transport': ret};
+			if (transport){
+				return {'heart': true, 'transport': transport};
 			}
 
-			return false;
+			return null;
 		},
 
 		xhrPolling: function(){
@@ -172,7 +172,8 @@
 		var isClosed = true;
 		var readyState = CLOSED;
 		var heartbeat;
-		var delay = delayDefault = 80;
+		var delay = 80;
+		var delayDefault = 80;
 		var delayMax = 10000;
 
 		var transport;
@@ -210,6 +211,7 @@
 					return;
 				}
 
+				transport = null;
 				clearInterval(heartbeat);
 
 				if (readyState == CLOSING){
@@ -250,11 +252,17 @@
 			url = newURL;
 		};
 		this.send = function(data){
-			return transport.send(data);
+			if (transport){
+				return transport.send(data);
+			} else{
+				return false;
+			}
 		};
 		this.close = function(){
 			readyState = CLOSING;
-			transport.close();
+			if (transport){
+				transport.close();
+			}
 		};
 	};
 
