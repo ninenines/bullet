@@ -251,11 +251,17 @@
 			url = newURL;
 		};
 		this.send = function(data){
-			return transport.send(data);
+			if (transport){
+				return transport.send(data);
+			} else{
+				return false;
+			}
 		};
 		this.close = function(){
 			readyState = CLOSING;
-			transport.close();
+			if (transport){
+				transport.close();
+			}
 		};
 	};
 
