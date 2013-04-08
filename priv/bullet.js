@@ -172,7 +172,8 @@
 		var isClosed = true;
 		var readyState = CLOSED;
 		var heartbeat;
-		var delay = delayDefault = 80;
+		var delay = 80;
+		var delayDefault = 80;
 		var delayMax = 10000;
 
 		var transport;
