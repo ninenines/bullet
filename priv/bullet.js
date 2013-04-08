@@ -215,6 +215,7 @@
 
 				if (readyState == CLOSING){
 					readyState = CLOSED;
+					transport = false;
 					stream.onclose();
 				} else{
 					// Close happened on connect, select next transport
