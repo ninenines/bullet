@@ -27,7 +27,9 @@
 
 -record(state, {
 	handler :: module(),
-	handler_state :: term()
+	handler_state :: term(),
+	% poll or eventsource for GET requests
+	get_mode :: 'undefined' | 'poll' | 'eventsource'
 }).
 
 -define(TIMEOUT, 60000). %% @todo Configurable.
@@ -52,13 +54,19 @@ init(Transport, Req, Opts) ->
 init(Transport, Req, Opts, <<"GET">>) ->
 	{handler, Handler} = lists:keyfind(handler, 1, Opts),
 	State = #state{handler=Handler},
-	case Handler:init(Transport, Req, Opts, once) of
-		{ok, Req2, HandlerState} ->
-			Req3 = cowboy_req:compact(Req2),
-			{loop, Req3, State#state{handler_state=HandlerState},
-				?TIMEOUT, hibernate};
-		{shutdown, Req2, HandlerState} ->
-			{shutdown, Req2, State#state{handler_state=HandlerState}}
+	{GetMode, Req2} = get_mode(Req),
+	Active = case GetMode of
+		poll -> once;
+		eventsource -> true
+	end,
+	case Handler:init(Transport, Req2, Opts, Active) of
+		{ok, Req3, HandlerState} ->
+			{ok, Req4} = start_get_mode(GetMode, Req3),
+			Req5 = cowboy_req:compact(Req4),
+			{loop, Req5, State#state{handler_state=HandlerState,
+				get_mode=GetMode}, ?TIMEOUT, hibernate};
+		{shutdown, Req3, HandlerState} ->
+			{shutdown, Req3, State#state{handler_state=HandlerState}}
 	end;
 init(Transport, Req, Opts, <<"POST">>) ->
 	{handler, Handler} = lists:keyfind(handler, 1, Opts),
@@ -94,13 +102,19 @@ handle(Req, State=#state{handler=Handler, handler_state=HandlerState},
 	end.
 
 info(Message, Req,
-		State=#state{handler=Handler, handler_state=HandlerState}) ->
+		State=#state{get_mode=GetMode, handler=Handler,
+		handler_state=HandlerState}) ->
 	case Handler:info(Message, Req, HandlerState) of
 		{ok, Req2, HandlerState2} ->
 			{loop, Req2, State#state{handler_state=HandlerState2}, hibernate};
 		{reply, Data, Req2, HandlerState2} ->
-			{ok, Req3} = cowboy_req:reply(200, [], Data, Req2),
-			{ok, Req3, State#state{handler_state=HandlerState2}}
+			State2 = State#state{handler_state=HandlerState2},
+			case reply_get_mode(GetMode, Data, Req2) of
+				{ok, Req3} ->
+					{ok, Req3, State2};
+				{loop, Req3} ->
+					{loop, Req3, State2, hibernate}
+			end
 	end.
 
 terminate(_Reason, _Req, undefined) ->
@@ -147,3 +161,35 @@ websocket_info(Info, Req, State=#state{
 websocket_terminate(_Reason, Req,
 		#state{handler=Handler, handler_state=HandlerState}) ->
 	Handler:terminate(Req, HandlerState).
+
+%% Eventsource and poll utilities
+
+get_mode(Req) ->
+	case cowboy_req:parse_header(<<"accept">>, Req) of
+		{ok, Accepts, Req2} ->
+			get_mode(Accepts, Req2);
+		_ ->
+			{poll, Req}
+	end.
+
+get_mode([{{<<"text">>, <<"event-stream">>, _}, _, _}|_], Req) ->
+	{eventsource, Req};
+get_mode([_|Accepts], Req) ->
+	get_mode(Accepts, Req);
+get_mode([], Req) ->
+	{poll, Req}.
+
+start_get_mode(poll, Req) ->
+	{ok, Req};
+start_get_mode(eventsource, Req) ->
+	Headers = [{<<"content-type">>, <<"text/event-stream">>}],
+	{ok, _} = cowboy_req:chunked_reply(200, Headers, Req).
+
+reply_get_mode(poll, Data, Req) ->
+	{ok, _} = cowboy_req:reply(200, [], Data, Req);
+reply_get_mode(eventsource, Data, Req) ->
+	Bin = iolist_to_binary(Data),
+	Event = [[<<"data: ">>, Line, <<"\n">>] ||
+		Line <- binary:split(Bin, [<<"\r\n">>, <<"\r">>, <<"\n">>], [global])],
+	ok = cowboy_req:chunk([Event, <<"\n">>], Req),
+	{loop, Req}.

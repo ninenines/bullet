@@ -32,7 +32,7 @@
 	onheartbeat is called once every few seconds to allow you to easily setup
 	a ping/pong mechanism.
 */
-(function($){$.extend({bullet: function(url){
+(function($){$.extend({bullet: function(url, options){
 	var CONNECTING = 0;
 	var OPEN = 1;
 	var CLOSING = 2;
@@ -46,6 +46,10 @@
 		*/
 		websocket: function(){
 			var ret = false;
+
+			if (options !== undefined && options.disableWebSocket) {
+				return false;
+			}
 
 			if (window.WebSocket){
 				ret = window.WebSocket;
@@ -63,7 +67,54 @@
 			return false;
 		},
 
+		eventsource: function(){
+			if (options !== undefined && options.disableEventSource) {
+				return false;
+			}
+
+			if (!window.EventSource){
+				return false;
+			}
+
+			var eventsourceURL = url.replace('ws:', 'http:').replace('wss:', 'https:');
+			var source = new window.EventSource(eventsourceURL);
+
+			source.onopen = function () {
+				fake.readyState = OPEN;
+				fake.onopen();
+			};
+
+			source.onmessage = function (event) {
+				fake.onmessage(event);
+			};
+
+			source.onerror = function () {
+				source.close(); // bullet will handle reconnects
+				source = undefined;
+				fake.onerror();
+			};
+
+			var fake = {
+				readyState: CONNECTING,
+				send: function(data){
+					return false; // fallback to another method instead?
+				},
+				close: function(){
+					fake.readyState = CLOSED;
+					source.close();
+					source = undefined;
+					fake.onclose();
+				}
+			};
+
+			return {'heart': false, 'transport': function(){ return fake; }};
+		},
+
 		xhrPolling: function(){
+			if (options !== undefined && options.disableXHRPolling) {
+				return false;
+			}
+
 			var timeout;
 			var xhr;
 
