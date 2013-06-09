@@ -20,13 +20,17 @@ handle(Req, State) ->
 </head>
 
 <body>
-	<p>Current time (best source): <span id=\"time_best\">unknown</span>
+	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_best\"></input>
+		Current time (best source): <span id=\"time_best\">unknown</span>
 		<span> </span><span id=\"status_best\">unknown</span></p>
-	<p>Current time (websocket only): <span id=\"time_websocket\">unknown</span>
+	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_websocket\"></input>
+		Current time (websocket only): <span id=\"time_websocket\">unknown</span>
 		<span> </span><span id=\"status_websocket\">unknown</span></p>
-	<p>Current time (eventsource only): <span id=\"time_eventsource\">unknown</span>
+	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_eventsource\"></input>
+		Current time (eventsource only): <span id=\"time_eventsource\">unknown</span>
 		<span> </span><span id=\"status_eventsource\">unknown</span></p>
-	<p>Current time (polling only): <span id=\"time_polling\">unknown</span>
+	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_polling\"></input>
+		Current time (polling only): <span id=\"time_polling\">unknown</span>
 		<span> </span><span id=\"status_polling\">unknown</span></p>
 
 	<script
@@ -37,22 +41,34 @@ handle(Req, State) ->
 // <![CDATA[
 $(document).ready(function(){
 	var start = function(name, options) {
-		var bullet = $.bullet('ws://localhost:8080/bullet', options);
-	 	bullet.onopen = function(){
-			$('#status_' + name).text('online');
-		};
-		bullet.ondisconnect = function(){
-			$('#status_' + name).text('offline');
-		};
-		bullet.onmessage = function(e){
-			if (e.data != 'pong'){
-				$('#time_' + name).text(e.data);
-			}
-		};
-		bullet.onheartbeat = function(){
-			console.log('ping: ' + name);
-			bullet.send('ping: ' + name);
+		var bullet;
+		var open = function(){
+			bullet = $.bullet('ws://localhost:8080/bullet', options);
+		 	bullet.onopen = function(){
+				$('#status_' + name).text('online');
+			};
+			bullet.onclose = bullet.ondisconnect = function(){
+				$('#status_' + name).text('offline');
+			};
+			bullet.onmessage = function(e){
+				if (e.data != 'pong'){
+					$('#time_' + name).text(e.data);
+				}
+			};
+			bullet.onheartbeat = function(){
+				console.log('ping: ' + name);
+				bullet.send('ping: ' + name);
+			};
 		}
+		open();
+		$('#enable_' + name).on('change', function(){
+			if (this.checked){
+				open();
+			} else{
+				bullet.close();
+				bullet = null;
+			}
+		});
 	};
 
 	start('best', {});
