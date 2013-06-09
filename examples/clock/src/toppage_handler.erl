@@ -51,7 +51,7 @@ $(document).ready(function(){
 		};
 		bullet.onheartbeat = function(){
 			console.log('ping: ' + name);
-			bullet.send('ping');
+			bullet.send('ping: ' + name);
 		}
 	};
 

@@ -15,8 +15,8 @@ init(_Transport, Req, _Opts, _Active) ->
 	TRef = erlang:send_after(?PERIOD, self(), refresh),
 	{ok, Req, TRef}.
 
-stream(<<"ping">>, Req, State) ->
-	io:format("ping received~n"),
+stream(<<"ping: ", Name/binary>>, Req, State) ->
+	io:format("ping ~p received~n", [Name]),
 	{reply, <<"pong">>, Req, State};
 stream(Data, Req, State) ->
 	io:format("stream received ~s~n", [Data]),
