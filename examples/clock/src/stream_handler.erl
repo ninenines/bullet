@@ -12,8 +12,8 @@
 
 init(_Transport, Req, _Opts, _Active) ->
 	io:format("bullet init~n"),
-	_ = erlang:send_after(?PERIOD, self(), refresh),
-	{ok, Req, undefined}.
+	TRef = erlang:send_after(?PERIOD, self(), refresh),
+	{ok, Req, TRef}.
 
 stream(<<"ping">>, Req, State) ->
 	io:format("ping received~n"),
@@ -22,15 +22,16 @@ stream(Data, Req, State) ->
 	io:format("stream received ~s~n", [Data]),
 	{ok, Req, State}.
 
-info(refresh, Req, State) ->
-	_ = erlang:send_after(?PERIOD, self(), refresh),
+info(refresh, Req, _) ->
+	TRef = erlang:send_after(?PERIOD, self(), refresh),
 	DateTime = cowboy_clock:rfc1123(),
 	io:format("clock refresh timeout: ~s~n", [DateTime]),
-	{reply, DateTime, Req, State};
+	{reply, DateTime, Req, TRef};
 info(Info, Req, State) ->
 	io:format("info received ~p~n", [Info]),
 	{ok, Req, State}.
 
-terminate(_Req, _State) ->
+terminate(_Req, TRef) ->
 	io:format("bullet terminate~n"),
+	erlang:cancel_timer(TRef),
 	ok.
