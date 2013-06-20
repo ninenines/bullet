@@ -116,7 +116,7 @@
 			}
 
 			var timeout;
-			var xhr;
+			var xhr = null;
 
 			var fake = {
 				readyState: CONNECTING,
@@ -148,7 +148,10 @@
 				},
 				close: function(){
 					this.readyState = CLOSED;
-					xhr.abort();
+					if (xhr){
+						xhr.abort();
+						xhr = null;
+					}
 					clearTimeout(timeout);
 					fake.onclose();
 				},
@@ -169,6 +172,7 @@
 					data: {},
 					headers: {'X-Socket-Transport': 'xhrPolling'},
 					success: function(data){
+						xhr = null;
 						if (fake.readyState == CONNECTING){
 							fake.readyState = OPEN;
 							fake.onopen(fake);
@@ -182,6 +186,7 @@
 						}
 					},
 					error: function(xhr){
+						xhr = null;
 						fake.onerror();
 					}
 				});
