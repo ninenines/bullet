@@ -237,7 +237,7 @@
 				// Hard disconnect, inform the user and retry later
 				delay = delayDefault;
 				tn = 0;
-				stream.ondisconnect();
+				stream && stream.ondisconnect();
 				setTimeout(function(){init();}, delayMax);
 				return false;
 			}
