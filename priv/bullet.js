@@ -257,8 +257,9 @@
 			};
 			transport.onclose = function(){
 				// Firefox 13.0.1 sends 2 close events.
-				// Return directly if we already handled it.
-				if (isClosed){
+				// Return directly if we already handled it
+				// or we are closed
+				if (isClosed || readyState == CLOSED){
 					return;
 				}
 
