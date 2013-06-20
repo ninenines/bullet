@@ -138,7 +138,7 @@
 							'application/x-www-form-urlencoded; charset=utf-8',
 						headers: {'X-Socket-Transport': 'xhrPolling'},
 						success: function(data){
-							if (data.length != 0){
+							if (data.length !== 0){
 								fake.onmessage({'data': data});
 							}
 						}
@@ -174,7 +174,7 @@
 							fake.onopen(fake);
 						}
 						// Connection might have closed without a response body
-						if (data.length != 0){
+						if (data.length !== 0){
 							fake.onmessage({'data': data});
 						}
 						if (fake.readyState == OPEN){
