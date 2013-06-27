@@ -13,14 +13,10 @@
 %% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 {application, bullet, [
-	{id, "Bullet"},
 	{description,
 		"Simple, reliable, efficient streaming for Cowboy."},
-	{sub_description, "Bullet is a permanent bidirectional connection "
-		"between the browser and the server."},
 	{vsn, "0.4.1"},
 	{modules, []},
-	{registered, []},
 	{applications, [
 		kernel,
 		stdlib,
