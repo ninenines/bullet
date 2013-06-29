@@ -22,16 +22,20 @@ handle(Req, State) ->
 <body>
 	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_best\"></input>
 		Current time (best source): <span id=\"time_best\">unknown</span>
-		<span> </span><span id=\"status_best\">unknown</span></p>
+		<span></span><span id=\"status_best\">unknown</span>
+		<button id=\"send_best\">Send Time</button></p>
 	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_websocket\"></input>
 		Current time (websocket only): <span id=\"time_websocket\">unknown</span>
-		<span> </span><span id=\"status_websocket\">unknown</span></p>
+		<span></span><span id=\"status_websocket\">unknown</span>
+		<button id=\"send_websocket\">Send Time</button></p>
 	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_eventsource\"></input>
 		Current time (eventsource only): <span id=\"time_eventsource\">unknown</span>
-		<span> </span><span id=\"status_eventsource\">unknown</span></p>
+		<span></span><span id=\"status_eventsource\">unknown</span>
+		<button id=\"send_eventsource\">Send Time</button></p>
 	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_polling\"></input>
 		Current time (polling only): <span id=\"time_polling\">unknown</span>
-		<span> </span><span id=\"status_polling\">unknown</span></p>
+		<span></span><span id=\"status_polling\">unknown</span>
+		<button id=\"send_polling\">Send Time</button></p>
 
 	<script
 		src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js\">
@@ -67,6 +71,12 @@ $(document).ready(function(){
 			} else{
 				bullet.close();
 				bullet = null;
+			}
+		});
+		$('#send_' + name).on('click', function(){
+			if (bullet) {	
+				bullet.send('time: ' + name + ' '
+					+ $('#time_' + name).text());
 			}
 		});
 	};

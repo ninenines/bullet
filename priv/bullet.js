@@ -38,6 +38,36 @@
 	var CLOSING = 2;
 	var CLOSED = 3;
 
+	var xhrSend = function(data){
+		/**
+			Send a message using ajax. Used for both the
+			eventsource and xhrPolling transports.
+		 */
+		if (this.readyState != CONNECTING && this.readyState != OPEN){
+			return false;
+		}
+
+		var sendUrl = url.replace('ws:', 'http:').replace('wss:', 'https:');
+
+		$.ajax({
+			async: false,
+			cache: false,
+			type: 'POST',
+			url: sendUrl,
+			data: data,
+			dataType: 'text',
+			contentType: 'application/x-www-form-urlencoded; charset=utf-8',
+			headers: {'X-Socket-Transport': 'xhrPolling'},
+			success: function(data){
+				if (data.length !== 0){
+					fake.onmessage({'data': data});
+				}
+			}
+		});
+
+		return true;
+	};
+
 	var transports = {
 		/**
 			The websocket transport is disabled for Firefox 6.0 because it
@@ -96,9 +126,7 @@
 
 			var fake = {
 				readyState: CONNECTING,
-				send: function(data){
-					return false; // fallback to another method instead?
-				},
+				send: xhrSend,
 				close: function(){
 					fake.readyState = CLOSED;
 					source.close();
@@ -116,39 +144,17 @@
 			}
 
 			var timeout;
-			var xhr;
+			var xhr = null;
 
 			var fake = {
 				readyState: CONNECTING,
-				send: function(data){
-					if (this.readyState != CONNECTING && this.readyState != OPEN){
-						return false;
-					}
-
-					var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
-
-					$.ajax({
-						async: false,
-						cache: false,
-						type: 'POST',
-						url: fakeurl,
-						data: data,
-						dataType: 'text',
-						contentType:
-							'application/x-www-form-urlencoded; charset=utf-8',
-						headers: {'X-Socket-Transport': 'xhrPolling'},
-						success: function(data){
-							if (data.length != 0){
-								fake.onmessage({'data': data});
-							}
-						}
-					});
-
-					return true;
-				},
+				send: xhrSend,
 				close: function(){
 					this.readyState = CLOSED;
-					xhr.abort();
+					if (xhr){
+						xhr.abort();
+						xhr = null;
+					}
 					clearTimeout(timeout);
 					fake.onclose();
 				},
@@ -169,12 +175,13 @@
 					data: {},
 					headers: {'X-Socket-Transport': 'xhrPolling'},
 					success: function(data){
+						xhr = null;
 						if (fake.readyState == CONNECTING){
 							fake.readyState = OPEN;
 							fake.onopen(fake);
 						}
 						// Connection might have closed without a response body
-						if (data.length != 0){
+						if (data.length !== 0){
 							fake.onmessage({'data': data});
 						}
 						if (fake.readyState == OPEN){
@@ -182,6 +189,7 @@
 						}
 					},
 					error: function(xhr){
+						xhr = null;
 						fake.onerror();
 					}
 				});
@@ -257,8 +265,9 @@
 			};
 			transport.onclose = function(){
 				// Firefox 13.0.1 sends 2 close events.
-				// Return directly if we already handled it.
-				if (isClosed){
+				// Return directly if we already handled it
+				// or we are closed
+				if (isClosed || readyState == CLOSED){
 					return;
 				}
 
