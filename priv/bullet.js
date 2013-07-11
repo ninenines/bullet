@@ -48,7 +48,7 @@
 		}
 
 		var sendUrl = url.replace('ws:', 'http:').replace('wss:', 'https:');
-
+		var self = this;
 		$.ajax({
 			async: false,
 			cache: false,
@@ -60,7 +60,7 @@
 			headers: {'X-Socket-Transport': 'xhrPolling'},
 			success: function(data){
 				if (data.length !== 0){
-					fake.onmessage({'data': data});
+					self.onmessage({'data': data});
 				}
 			}
 		});
