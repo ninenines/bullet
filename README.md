@@ -4,16 +4,18 @@ Bullet
 Bullet is a Cowboy handler and associated Javascript library for
 maintaining a persistent connection between a client and a server.
 
-Bullet abstracts a general transport protocol familiar to WebSockets, and
-is equipped with several "fallback" transports. Bullet will automatically
-use one of these when the browser used is not able to support WebSockets.
+Bullet abstracts a general transport protocol similar to WebSockets.
+Bullet will use a WebSocket if possible but will fallback to other
+transports when necessary. If the client supports EventSource
+connections then Bullet will use EventSource to send messages from the
+server to the client and XHR for messages from the client to the
+server. If EventSource is not available then Bullet will use XHR for
+both directions, using long-polling for server-to-client messages.
 
-A common interface is defined for both client and server-side to easily
+A common interface is defined for both client and server to easily
 facilitate the handling of such connections. Bullet additionally takes care
 of reconnecting automatically whenever a connection is lost, and also
 provides an optional heartbeat which is managed on the client side.
-
-Today Bullet only supports websocket and long-polling transports.
 
 Dispatch options
 ----------------
@@ -95,10 +97,13 @@ a document.ready function like this:
 $(document).ready(function(){
 	var bullet = $.bullet('ws://localhost/path/to/bullet/handler');
 	bullet.onopen = function(){
-		console.log('WebSocket: opened');
+		console.log('bullet: opened');
+	};
+	bullet.ondisconnect = function(){
+		console.log('bullet: disconnected');
 	};
 	bullet.onclose = function(){
-		console.log('WebSocket: closed');
+		console.log('bullet: closed');
 	};
 	bullet.onmessage = function(e){
 		alert(e.data);
@@ -108,6 +113,21 @@ $(document).ready(function(){
 	}
 });
 ```
+
+Always use the WebSocket (ws:) form for your bullet URLs and Bullet
+will change the URL as needed for non-WebSocket transports.
+
+The `$.bullet` function takes an optional second 'options' object.
+The following properties are supported:
+
+| Name                   | Default | Description                         |
+| ---------------------- | --------|------------------------------------ |
+| disableWebSocket       | false   | Never make WebSocket connections.   |
+| disableEventSource     | false   | Never make EventSource connections. |
+| disableXHRPolling      | false   | Never fallback to XHR long polling. |
+
+Note that if EventSource is enabled and chosen as the underlying
+transport, XHR will be used for client-to-server messages.
 
 Bullet works especially well when it is used to send JSON data
 formatted with the jQuery JSON plugin.
