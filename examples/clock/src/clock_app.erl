@@ -15,12 +15,7 @@ start(_Type, _Args) ->
 		{'_', [
 			{"/", toppage_handler, []},
 			{"/bullet", bullet_handler, [{handler, stream_handler}]},
-			{"/static/[...]", cowboy_static, [
-				{directory, {priv_dir, bullet, []}},
-				{mimetypes, [
-					{<<".js">>, [<<"application/javascript">>]}
-				]}
-			]}
+			{"/static/[...]", cowboy_static, {priv_dir, bullet, []}}
 		]}
 	]),
 	{ok, _} = cowboy:start_http(http, 100,
