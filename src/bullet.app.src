@@ -17,6 +17,7 @@
 		"Simple, reliable, efficient streaming for Cowboy."},
 	{vsn, "0.4.1"},
 	{modules, []},
+	{registered, []},
 	{applications, [
 		kernel,
 		stdlib,
