@@ -144,7 +144,9 @@ websocket_handle({text, Data}, Req,
 			{ok, Req2, State#state{handler_state=HandlerState2}, hibernate};
 		{reply, Reply, Req2, HandlerState2} ->
 			{reply, {text, Reply}, Req2,
-				State#state{handler_state=HandlerState2}, hibernate}
+				State#state{handler_state=HandlerState2}, hibernate};
+		{shutdown, Req2, HandlerState2} ->
+			{shutdown, Req2, State#state{handler_state=HandlerState2}}
 	end;
 websocket_handle(_Frame, Req, State) ->
 	{ok, Req, State, hibernate}.
@@ -156,7 +158,9 @@ websocket_info(Info, Req, State=#state{
 			{ok, Req2, State#state{handler_state=HandlerState2}, hibernate};
 		{reply, Reply, Req2, HandlerState2} ->
 			{reply, {text, Reply}, Req2,
-				State#state{handler_state=HandlerState2}, hibernate}
+				State#state{handler_state=HandlerState2}, hibernate};
+		{shutdown, Req2, HandlerState2} ->
+			{shutdown, Req2, State#state{handler_state=HandlerState2}}
 	end.
 
 websocket_terminate(_Reason, Req,
