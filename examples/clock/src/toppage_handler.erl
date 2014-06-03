@@ -24,6 +24,10 @@ handle(Req, State) ->
 		Current time (best source): <span id=\"time_best\">unknown</span>
 		<span></span><span id=\"status_best\">unknown</span>
 		<button id=\"send_best\">Send Time</button></p>
+	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_best_nows\"></input>
+		Current time (best source non-websocket): <span id=\"time_best_nows\">unknown</span>
+		<span></span><span id=\"status_best_nows\">unknown</span>
+		<button id=\"send_best_nows\">Send Time</button></p>
 	<p><input type=\"checkbox\" checked=\"yes\" id=\"enable_websocket\"></input>
 		Current time (websocket only): <span id=\"time_websocket\">unknown</span>
 		<span></span><span id=\"status_websocket\">unknown</span>
@@ -44,10 +48,10 @@ handle(Req, State) ->
 	<script type=\"text/javascript\">
 // <![CDATA[
 $(document).ready(function(){
-	var start = function(name, options) {
+	var start = function(name, url, options) {
 		var bullet;
 		var open = function(){
-			bullet = $.bullet('ws://localhost:8080/bullet', options);
+			bullet = $.bullet(url, options);
 			bullet.onopen = function(){
 				$('#status_' + name).text('online');
 			};
@@ -81,12 +85,13 @@ $(document).ready(function(){
 		});
 	};
 
-	start('best', {});
-	start('websocket', {'disableEventSource': true,
+	start('best', 'ws://localhost:8080/bullet', {});
+	start('best_nows', 'http://localhost:8080/bullet', {});
+	start('websocket', 'ws://localhost:8080/bullet', {'disableEventSource': true,
 		'disableXHRPolling': true});
-	start('eventsource', {'disableWebSocket': true,
+	start('eventsource', 'ws://localhost:8080/bullet', {'disableWebSocket': true,
 		'disableXHRPolling': true});
-	start('polling', {'disableWebSocket': true,
+	start('polling', 'ws://localhost:8080/bullet', {'disableWebSocket': true,
 		'disableEventSource': true});
 });
 // ]]>

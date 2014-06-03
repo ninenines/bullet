@@ -37,6 +37,16 @@
 	var OPEN = 1;
 	var CLOSING = 2;
 	var CLOSED = 3;
+	var httpURL = url.replace('ws:', 'http:').replace('wss:', 'https:');
+
+	if (url == httpURL) {
+		if (options == undefined) {
+			var options = {'disableWebSocket': true};
+		}
+		else {
+			options.disableWebSocket = true;
+		}
+	}
 
 	var xhrSend = function(data){
 		/**
@@ -47,13 +57,12 @@
 			return false;
 		}
 
-		var sendUrl = url.replace('ws:', 'http:').replace('wss:', 'https:');
 		var self = this;
 		$.ajax({
 			async: false,
 			cache: false,
 			type: 'POST',
-			url: sendUrl,
+			url: httpURL,
 			data: data,
 			dataType: 'text',
 			contentType: 'application/x-www-form-urlencoded; charset=utf-8',
@@ -106,8 +115,7 @@
 				return false;
 			}
 
-			var eventsourceURL = url.replace('ws:', 'http:').replace('wss:', 'https:');
-			var source = new window.EventSource(eventsourceURL);
+			var source = new window.EventSource(httpURL);
 
 			source.onopen = function () {
 				fake.readyState = OPEN;
@@ -165,12 +173,11 @@
 			};
 
 			function poll(){
-				var fakeurl = url.replace('ws:', 'http:').replace('wss:', 'https:');
 
 				xhr = $.ajax({
 					type: 'GET',
 					cache: false,
-					url: fakeurl,
+					url: httpURL,
 					dataType: 'text',
 					data: {},
 					headers: {'X-Socket-Transport': 'xhrPolling'},

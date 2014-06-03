@@ -114,8 +114,11 @@ $(document).ready(function(){
 });
 ```
 
-Always use the WebSocket (ws:) form for your bullet URLs and Bullet
+Use the WebSocket (ws:) form for your bullet URLs and Bullet
 will change the URL as needed for non-WebSocket transports.
+
+Use the standard (http:) form for your bullet URLs and Bullet
+will only try non-WebSocket transports.
 
 The `$.bullet` function takes an optional second 'options' object.
 The following properties are supported:
