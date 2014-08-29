@@ -35,6 +35,23 @@ The dispatch options for a Bullet handler looks as follow:
 Simply define this in your dispatch list and your handler will be
 available and handled by Bullet properly.
 
+The third element in the tuple ([{handler, my_stream}]) will be passed 
+to init/4 as Opts, you can add your own options and get them using
+lists:keyfind, for example if we define our handler as:
+
+``` erlang
+{[<<"path">>, <<"to">>, <<"bullet">>], bullet_handler,
+	[{handler, my_stream}, {channel, "my channel"}]}
+```
+
+you can retrieve the channel value as follows:
+
+``` erlang
+init(_Transport, Req, Opts, _Active) ->
+	{channel, Channel} = lists:keyfind(channel, 1, Opts),
+	{ok, Req, #state{channel=Channel}}.
+```
+
 Cowboy handler
 --------------
 
