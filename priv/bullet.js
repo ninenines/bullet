@@ -321,7 +321,8 @@
 		};
 		this.send = function(data){
 			if (transport){
-				return transport.send(data);
+				var ret = transport.send(data);
+				return (ret === undefined) || ret;
 			} else{
 				return false;
 			}
