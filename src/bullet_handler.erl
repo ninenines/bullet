@@ -182,6 +182,8 @@ get_mode([{{<<"text">>, <<"event-stream">>, _}, _, _}|_], Req) ->
 get_mode([_|Accepts], Req) ->
 	get_mode(Accepts, Req);
 get_mode([], Req) ->
+	{poll, Req};
+get_mode(undefined, Req) ->
 	{poll, Req}.
 
 start_get_mode(poll, Req) ->
