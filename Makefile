@@ -5,7 +5,7 @@ PROJECT = bullet
 # Dependencies.
 
 DEPS = cowboy
-dep_cowboy = https://github.com/extend/cowboy.git 0.9.0
+dep_cowboy = https://github.com/extend/cowboy.git 1.0.1
 
 # Standard targets.
 
