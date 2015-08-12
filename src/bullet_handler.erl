@@ -198,8 +198,10 @@ reply_get_mode(eventsource, Data, Req) ->
 	Bin = iolist_to_binary(Data),
 	Event = [[<<"data: ">>, Line, <<"\n">>] ||
 		Line <- binary:split(Bin, [<<"\r\n">>, <<"\r">>, <<"\n">>], [global])],
-	ok = cowboy_req:chunk([Event, <<"\n">>], Req),
-	{loop, Req}.
+    case cowboy_req:chunk([Event, <<"\n">>], Req) of
+        ok -> {loop, Req};
+        close -> {ok, Req}
+    end.
 
 %% Internal.
 
