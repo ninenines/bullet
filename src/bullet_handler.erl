@@ -200,7 +200,8 @@ reply_get_mode(eventsource, Data, Req) ->
 		Line <- binary:split(Bin, [<<"\r\n">>, <<"\r">>, <<"\n">>], [global])],
     case cowboy_req:chunk([Event, <<"\n">>], Req) of
         ok -> {loop, Req};
-        close -> {ok, Req}
+        close -> {ok, Req};
+        {error, closed} -> {ok, Req}
     end.
 
 %% Internal.
