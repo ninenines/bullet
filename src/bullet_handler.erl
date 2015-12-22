@@ -107,10 +107,10 @@ info(Message, Req,
 	case Handler:info(Message, Req, HandlerState) of
 		{ok, Req2, HandlerState2} ->
 			{loop, Req2, State#state{handler_state=HandlerState2}, hibernate};
-        {shutdown, Req2, HandlerState2} ->
+		{shutdown, Req2, HandlerState2} ->
 			State2 = State#state{handler_state=HandlerState2},
-            {ok, Req3} = shutdown_get_mode(GetMode, Req2),
-            {ok, Req3, State2};
+			{ok, Req3} = shutdown_get_mode(GetMode, Req2),
+			{ok, Req3, State2};
 		{reply, Data, Req2, HandlerState2} ->
 			State2 = State#state{handler_state=HandlerState2},
 			case reply_get_mode(GetMode, Data, Req2) of
@@ -199,7 +199,7 @@ start_get_mode(eventsource, Req) ->
 shutdown_get_mode(poll, Req) ->
 	cowboy_req:reply(204, [], <<"">>, Req);
 shutdown_get_mode(eventsource, Req) ->
-    {ok, Req}.
+	{ok, Req}.
 
 reply_get_mode(poll, Data, Req) ->
 	{ok, _} = cowboy_req:reply(200, [], Data, Req);
