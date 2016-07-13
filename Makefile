@@ -5,7 +5,7 @@ PROJECT = bullet
 # Dependencies.
 
 DEPS = cowboy
-dep_cowboy = git git://github.com/ninenines/cowboy.git 1.0.4
+dep_cowboy = git https://github.com/ninenines/cowboy.git 1.0.4
 
 # Standard targets.
 
