@@ -1,5 +1,13 @@
-Bullet
-======
+Bullet (discontinued)
+=====================
+
+This project is discontinued and has been archived. It has not been
+updated in a few years and I am no longer using it nor do I have
+the time to maintain it. If you are using it and would like me to
+promote a fork or alternative based on Bullet, please send me an
+email and I will oblige. Thanks for your interest!
+
+The old README continues below.
 
 Bullet is a Cowboy handler and associated Javascript library for
 maintaining a persistent connection between a client and a server.
